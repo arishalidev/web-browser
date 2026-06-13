@@ -1,5 +1,8 @@
 import socket
 import ssl
+import tkinter
+
+from browser import Browser
 
 class URL:
     def __init__(self, url):
@@ -77,5 +80,6 @@ def load(url):
 
 
 if __name__ == "__main__":
-    load(URL("https://browser.engineering/examples/example1-simple.html"))
+    Browser().load(URL("http://localhost:8000/"))
+    tkinter.mainloop()
 
