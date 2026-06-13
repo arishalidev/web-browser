@@ -6,16 +6,21 @@ class URL:
         self.scheme, url = url.split("://", 1)
         assert self.scheme in ["http", "https"]
 
-        if "/" not in url:
-            url = url + "/"
-
-        self.host, url = url.split("/", 1)
-        self.path = "/" + url
-
         if self.scheme == "http":
             self.port = 80
         elif self.scheme == "https":
             self.port = 443
+
+        if "/" not in url:
+            url = url + "/"
+
+        self.host, url = url.split("/", 1)
+
+        if ":" in self.host:
+            self.host, port = self.host.split(":", 1)
+            self.port = int(port)
+
+        self.path = "/" + url
 
     def request(self):
         s = socket.socket(
@@ -72,5 +77,5 @@ def load(url):
 
 
 if __name__ == "__main__":
-    load(URL("https://www.google.com"))
+    load(URL("https://browser.engineering/examples/example1-simple.html"))
 
