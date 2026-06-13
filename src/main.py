@@ -56,30 +56,15 @@ class URL:
             header, value = line.split(":", 1)
             response_headers[header.casefold()] = value.strip()
 
-            assert  "transfer-encoding" not in response_headers
-            assert  "content-encoding" not in response_headers
+        assert  "transfer-encoding" not in response_headers
+        assert  "content-encoding" not in response_headers
 
-            content = response.read()
-            s.close()
+        content = response.read()
+        s.close()
 
-            return content
-
-def show(body):
-    in_tag = False
-    for c in body:
-        if c == "<":
-            in_tag = True
-        elif c == ">":
-            in_tag = False
-        elif not in_tag:
-            print(c, end="")
-
-def load(url):
-    body = url.request()
-    show(body)
-
+        return content
 
 if __name__ == "__main__":
-    Browser().load(URL("http://localhost:8000/"))
+    Browser().load(URL("https://browser.engineering/examples/xiyouji.html"))
     tkinter.mainloop()
 

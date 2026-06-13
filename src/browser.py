@@ -1,6 +1,18 @@
 import tkinter
 WIDTH, HEIGHT = 800, 600
 
+def lex(body):
+    in_tag = False
+    text = ""
+    for c in body:
+        if c == "<":
+            in_tag = True
+        elif c == ">":
+            in_tag = False
+        elif not in_tag:
+            text += c
+    return text
+
 class Browser:
     def __init__(self):
         self.window = tkinter.Tk()
@@ -12,6 +24,15 @@ class Browser:
         self.canvas.pack()
 
     def load(self, url):
-        self.canvas.create_rectangle(10, 20, 400, 300)
-        self.canvas.create_oval(100, 100, 400, 300)
-        self.canvas.create_text(200, 155, text="Welcome!")
+        body = url.request()
+        text = lex(body)
+
+        HSTEP, VSTEP = 13, 18
+        cursor_x, cursor_y = HSTEP, VSTEP
+        for c in text:
+            self.canvas.create_text(cursor_x, cursor_y, text=c)
+            cursor_x += HSTEP
+
+            if cursor_x >= WIDTH - HSTEP:
+                cursor_y += VSTEP
+                cursor_x = HSTEP
