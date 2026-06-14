@@ -109,6 +109,6 @@ class URL:
 
 
 if __name__ == "__main__":
-    Browser().load(URL("view-source:http://example.org/"))
+    Browser().load(URL("view-source:http://browser.engineering/http.html"))
     tkinter.mainloop()
 

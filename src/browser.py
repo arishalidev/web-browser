@@ -21,7 +21,7 @@ def replace_entity(text, entity, entity_replacement):
     index = text.find(entity)
 
     while index != -1:
-        text = text[0:index] + entity_replacement + text[index+4: -1]
+        text = text[0:index] + entity_replacement + text[index+4: len(text)]
         index = text.find(entity)
 
     return text
