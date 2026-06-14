@@ -6,24 +6,39 @@ from browser import Browser
 
 class URL:
     def __init__(self, url):
+
+        if not url:
+            url = "file:///Users/arisha/Documents/browserTest.txt"
+
         self.scheme, url = url.split("://", 1)
-        assert self.scheme in ["http", "https"]
+        assert self.scheme in ["http", "https", "file"]
 
-        if self.scheme == "http":
-            self.port = 80
-        elif self.scheme == "https":
-            self.port = 443
+        # logic for http and https urls
+        if self.scheme == "http" or self.scheme == "https":
+            if self.scheme == "http":
+                self.port = 80
+            elif self.scheme == "https":
+                self.port = 443
 
-        if "/" not in url:
-            url = url + "/"
+            if "/" not in url:
+                url = url + "/"
 
-        self.host, url = url.split("/", 1)
+            self.host, url = url.split("/", 1)
 
-        if ":" in self.host:
-            self.host, port = self.host.split(":", 1)
-            self.port = int(port)
+            if ":" in self.host:
+                self.host, port = self.host.split(":", 1)
+                self.port = int(port)
 
-        self.path = "/" + url
+            self.path = "/" + url
+
+        # logic for file urls
+        elif self.scheme == "file":
+
+            if "/" not in url:
+                url = "/" + url
+
+            self.filePath = url
+
 
     def request(self):
         s = socket.socket(
@@ -66,7 +81,28 @@ class URL:
 
         return content
 
+    def getfile(self):
+        try:
+            with open(self.filePath, "r") as file:
+                content = file.read()
+                return content
+        except FileNotFoundError:
+            print("File not found!")
+            exit(1)
+        except PermissionError:
+            print("You do not have permission to access this file!")
+            exit(1)
+        except IsADirectoryError:
+            print("File is a directory!")
+            exit(1)
+        except (UnicodeDecodeError, OSError):
+            print("Error opening file!")
+            exit(1)
+
+
+
+
 if __name__ == "__main__":
-    Browser().load(URL("https://browser.engineering"))
+    Browser().load(URL(""))
     tkinter.mainloop()
 

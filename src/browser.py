@@ -33,7 +33,14 @@ class Browser:
 
 
     def load(self, url):
-        body = url.request()
+
+        if url.scheme == "http" or url.scheme == "https":
+            body = url.request()
+        elif url.scheme == "file":
+            body = url.getfile()
+        else:
+            body = ""
+
         text = lex(body)
         self.display_list = layout(text)
         self.draw()
