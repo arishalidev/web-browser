@@ -17,6 +17,16 @@ def lex(body):
             text += c
     return text
 
+def replace_entity(text, entity, entity_replacement):
+    index = text.find(entity)
+
+    while index != -1:
+        text = text[0:index] + entity_replacement + text[index+4: -1]
+        index = text.find(entity)
+
+    return text
+
+
 class Browser:
     def __init__(self):
         self.display_list = None
@@ -29,7 +39,7 @@ class Browser:
         )
         self.canvas.pack()
 
-        self.window.bind("<Down>", self.scrolldown)
+        self.window.bind("<Down>", self.scroll_down)
 
 
     def load(self, url):
@@ -42,6 +52,9 @@ class Browser:
             body = ""
 
         text = lex(body)
+        text = replace_entity(text, "&lt;", "<")
+        text = replace_entity(text, "&gt;", ">")
+
         self.display_list = layout(text)
         self.draw()
 
@@ -51,7 +64,7 @@ class Browser:
         for x, y, c in self.display_list:
             self.canvas.create_text(x, y - self.scroll, text=c)
 
-    def scrolldown(self, e):
+    def scroll_down(self):
         self.scroll += SCROLL_STEP
         self.draw()
 
