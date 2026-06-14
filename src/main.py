@@ -37,8 +37,10 @@ class URL:
             ctx = ssl.create_default_context()
             s = ctx.wrap_socket(s, server_hostname=self.host)
 
-        request = "GET {} HTTP/1.0\r\n".format(self.path)
+        request = "GET {} HTTP/1.1\r\n".format(self.path)
         request += "Host: {}\r\n".format(self.host)
+        request += "Connection: {}\r\n".format("close")
+        request += "User-Agent: {}\r\n".format("Best Browser")
         request += "\r\n"
 
         s.send(request.encode("utf8"))
@@ -65,6 +67,6 @@ class URL:
         return content
 
 if __name__ == "__main__":
-    Browser().load(URL("https://browser.engineering/examples/xiyouji.html"))
+    Browser().load(URL("https://browser.engineering"))
     tkinter.mainloop()
 
