@@ -11,33 +11,39 @@ class URL:
             url = "file:///Users/arisha/Documents/browserTest.txt"
 
         self.scheme, url = url.split("://", 1)
-        assert self.scheme in ["http", "https", "file"]
+        assert self.scheme in ["http", "https", "file", "view-source:http", "view-source:https"]
 
-        # logic for http and https urls
-        if self.scheme == "http" or self.scheme == "https":
-            if self.scheme == "http":
-                self.port = 80
-            elif self.scheme == "https":
-                self.port = 443
+        match self.scheme:
+            case "http" | "https" | "view-source:http" | "view-source:https":
+                if self.scheme == "http" or self.scheme == "view-source:http":
+                    self.port = 80
+                elif self.scheme == "https" or self.scheme == "view-source:https":
+                    self.port = 443
 
-            if "/" not in url:
-                url = url + "/"
+                if self.scheme.split(":", 1)[0] == "view-source":
+                    self.view_source = True
+                else:
+                    self.view_source = False
 
-            self.host, url = url.split("/", 1)
+                if "/" not in url:
+                    url = url + "/"
 
-            if ":" in self.host:
-                self.host, port = self.host.split(":", 1)
-                self.port = int(port)
+                self.host, url = url.split("/", 1)
 
-            self.path = "/" + url
+                if ":" in self.host:
+                    self.host, port = self.host.split(":", 1)
+                    self.port = int(port)
 
-        # logic for file urls
-        elif self.scheme == "file":
+                self.path = "/" + url
 
-            if "/" not in url:
-                url = "/" + url
+            case "file":
+                if "/" not in url:
+                    url = "/" + url
 
-            self.filePath = url
+                self.file_path = url
+                self.view_source = True
+
+
 
 
     def request(self):
@@ -83,7 +89,7 @@ class URL:
 
     def getfile(self):
         try:
-            with open(self.filePath, "r") as file:
+            with open(self.file_path, "r") as file:
                 content = file.read()
                 return content
         except FileNotFoundError:
@@ -103,6 +109,6 @@ class URL:
 
 
 if __name__ == "__main__":
-    Browser().load(URL(""))
+    Browser().load(URL("view-source:http://example.org/"))
     tkinter.mainloop()
 

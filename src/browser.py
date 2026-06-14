@@ -44,14 +44,19 @@ class Browser:
 
     def load(self, url):
 
-        if url.scheme == "http" or url.scheme == "https":
-            body = url.request()
-        elif url.scheme == "file":
-            body = url.getfile()
-        else:
-            body = ""
+        match url.scheme:
+            case "http" | "https" | "view-source:http" | "view-source:https":
+                body = url.request()
+            case "file":
+                body = url.getfile()
+            case _:
+                body = ""
 
-        text = lex(body)
+        if not url.view_source:
+            text = lex(body)
+        else:
+            text = body
+
         text = replace_entity(text, "&lt;", "<")
         text = replace_entity(text, "&gt;", ">")
 
@@ -64,7 +69,7 @@ class Browser:
         for x, y, c in self.display_list:
             self.canvas.create_text(x, y - self.scroll, text=c)
 
-    def scroll_down(self):
+    def scroll_down(self, e):
         self.scroll += SCROLL_STEP
         self.draw()
 
