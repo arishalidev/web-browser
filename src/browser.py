@@ -41,12 +41,15 @@ class Browser:
 
         self.window.bind("<Down>", self.scroll_down)
 
+        self.current_host = ("", None)
+
 
     def load(self, url):
 
         match url.scheme:
             case "http" | "https" | "view-source:http" | "view-source:https":
-                body = url.request()
+                body = url.request(url.host == self.current_host[0], self.current_host[1])
+                self.current_host = (url.host, url.socket)
             case "file":
                 body = url.getfile()
             case _:
@@ -59,6 +62,8 @@ class Browser:
 
         text = replace_entity(text, "&lt;", "<")
         text = replace_entity(text, "&gt;", ">")
+
+        print(text)
 
         self.display_list = layout(text)
         self.draw()

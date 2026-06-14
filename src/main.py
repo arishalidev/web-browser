@@ -7,6 +7,8 @@ from browser import Browser
 class URL:
     def __init__(self, url):
 
+        self.socket = None
+
         if not url:
             url = "file:///Users/arisha/Documents/browserTest.txt"
 
@@ -44,36 +46,42 @@ class URL:
                 self.view_source = True
 
 
+    def request(self, established = False, established_socket = None):
 
+        # create a new connection if not currently connected to the server
+        if not established:
+            s = socket.socket(
+                family=socket.AF_INET,
+                type=socket.SOCK_STREAM,
+                proto=socket.IPPROTO_TCP
+            )
 
-    def request(self):
-        s = socket.socket(
-            family=socket.AF_INET,
-            type=socket.SOCK_STREAM,
-            proto=socket.IPPROTO_TCP
-        )
+            s.connect((self.host, self.port))
+            if self.scheme == "https":
+                ctx = ssl.create_default_context()
+                s = ctx.wrap_socket(s, server_hostname=self.host)
 
-        s.connect((self.host, self.port))
-        if self.scheme == "https":
-            ctx = ssl.create_default_context()
-            s = ctx.wrap_socket(s, server_hostname=self.host)
+        # if already connected to server, use previously established connection
+        else:
+            s = established_socket
 
         request = "GET {} HTTP/1.1\r\n".format(self.path)
         request += "Host: {}\r\n".format(self.host)
-        request += "Connection: {}\r\n".format("close")
+        request += "Connection: {}\r\n".format("keep-alive")
         request += "User-Agent: {}\r\n".format("Best Browser")
         request += "\r\n"
 
         s.send(request.encode("utf8"))
 
-        response = s.makefile("r", encoding="utf8", newline="\r\n")
-        statusline = response.readline()
+        response = s.makefile("rb", encoding="utf8", newline="\r\n")
+        statusline = response.readline().decode("utf-8")
+
         version, status, explanation = statusline.split(" ", 2)
 
         response_headers = {}
 
         while True:
-            line = response.readline()
+            line = response.readline().decode("utf-8")
             if line == "\r\n": break
 
             header, value = line.split(":", 1)
@@ -82,8 +90,11 @@ class URL:
         assert  "transfer-encoding" not in response_headers
         assert  "content-encoding" not in response_headers
 
-        content = response.read()
-        s.close()
+
+        response_length = int(response_headers.get("content-length"))
+        content = response.read(response_length).decode("utf-8")
+
+        self.socket = s
 
         return content
 
@@ -106,9 +117,9 @@ class URL:
             exit(1)
 
 
-
-
 if __name__ == "__main__":
-    Browser().load(URL("view-source:http://browser.engineering/http.html"))
+    b = Browser()
+    b.load(URL("https://browser.engineering/http.html"))
+    b.load(URL("https://browser.engineering/graphics.html"))
     tkinter.mainloop()
 
