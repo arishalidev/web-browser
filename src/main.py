@@ -1,6 +1,7 @@
 import socket
 import ssl
 import tkinter
+import gzip
 
 from browser import Browser
 
@@ -68,6 +69,7 @@ class URL:
         request = "GET {} HTTP/1.1\r\n".format(self.path)
         request += "Host: {}\r\n".format(self.host)
         request += "Connection: {}\r\n".format("keep-alive")
+        request += "Accept-Encoding: {}\r\n".format("gzip")
         request += "User-Agent: {}\r\n".format("Best Browser")
         request += "\r\n"
 
@@ -87,16 +89,48 @@ class URL:
             header, value = line.split(":", 1)
             response_headers[header.casefold()] = value.strip()
 
-        assert  "transfer-encoding" not in response_headers
-        assert  "content-encoding" not in response_headers
-
-
-        response_length = int(response_headers.get("content-length"))
-        content = response.read(response_length).decode("utf-8")
-
         self.socket = s
 
-        return content
+        if "transfer-encoding" in response_headers:
+            if response_headers.get("transfer-encoding") == "chunked":
+
+                content = ""
+
+                while True:
+                    response_length = response.readline().decode("utf-8")
+                    response_length = response_length.split("b'", 0)[0].strip()
+                    response_length = int(response_length, 16)
+
+                    if response_length == 0:
+                        break
+
+                    raw_content = response.read(response_length)
+
+                    if "content-encoding" in response_headers:
+                        if response_headers.get("content-encoding") == "gzip":
+                            content += gzip.decompress(raw_content).decode("utf-8")
+                        else:
+                            content += raw_content.decode("utf-8")
+
+                    response.read(2)
+
+                return content
+
+            else:
+                return "Unsupported transfer encoding method!"
+        else:
+            response_length = int(response_headers.get("content-length"))
+            raw_content = response.read(response_length)
+
+            if "content-encoding" in response_headers:
+                if response_headers.get("content-encoding") == "gzip":
+                    return gzip.decompress(raw_content).decode("utf-8")
+                else:
+                    return "Unsupported content encoding method!"
+
+            else:
+                return raw_content.decode("utf-8")
+
 
     def getfile(self):
         try:
@@ -120,6 +154,5 @@ class URL:
 if __name__ == "__main__":
     b = Browser()
     b.load(URL("https://browser.engineering/http.html"))
-    b.load(URL("https://browser.engineering/graphics.html"))
     tkinter.mainloop()
 
