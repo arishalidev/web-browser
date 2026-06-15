@@ -18,15 +18,19 @@ class URL:
 
         match self.scheme:
             case "http" | "https" | "view-source:http" | "view-source:https":
-                if self.scheme == "http" or self.scheme == "view-source:http":
-                    self.port = 80
-                elif self.scheme == "https" or self.scheme == "view-source:https":
-                    self.port = 443
 
                 if self.scheme.split(":", 1)[0] == "view-source":
                     self.view_source = True
                 else:
                     self.view_source = False
+
+                if self.scheme == "http" or self.scheme == "view-source:http":
+                    self.port = 80
+                    self.scheme = "http"
+                elif self.scheme == "https" or self.scheme == "view-source:https":
+                    self.port = 443
+                    self.scheme = "https"
+
 
                 if "/" not in url:
                     url = url + "/"
@@ -58,7 +62,7 @@ class URL:
             )
 
             s.connect((self.host, self.port))
-            if self.scheme == "https" or self.scheme == "view-source:https":
+            if self.scheme == "https":
                 ctx = ssl.create_default_context()
                 s = ctx.wrap_socket(s, server_hostname=self.host)
 
@@ -90,6 +94,17 @@ class URL:
             response_headers[header.casefold()] = value.strip()
 
         self.socket = s
+
+        # Error code in 300 range, needs a redirect
+        if str(status)[0] == "3":
+            redirect_location = response_headers["location"]
+            if redirect_location[0] == "/":
+                redirect_location = self.scheme + self.host + redirect_location
+            if self.view_source:
+                redirect_location += "view-source:"
+
+            return URL(redirect_location).request(True, s)
+
 
         if "transfer-encoding" in response_headers:
             if response_headers.get("transfer-encoding") == "chunked":
@@ -150,6 +165,6 @@ class URL:
 
 if __name__ == "__main__":
     b = Browser()
-    b.load(URL("view-source:https://theyogainstitute.org"))
+    b.load(URL("http://bit.ly/3SaF39o"))
     tkinter.mainloop()
 

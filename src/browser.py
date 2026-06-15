@@ -45,15 +45,14 @@ class Browser:
 
 
     def load(self, url):
+        body = ""
 
         match url.scheme:
-            case "http" | "https" | "view-source:http" | "view-source:https":
+            case "http" | "https":
                 body = url.request(url.host == self.current_host[0], self.current_host[1])
                 self.current_host = (url.host, url.socket)
             case "file":
                 body = url.getfile()
-            case _:
-                body = ""
 
         if not url.view_source:
             text = lex(body)
