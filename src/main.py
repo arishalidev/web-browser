@@ -58,7 +58,7 @@ class URL:
             )
 
             s.connect((self.host, self.port))
-            if self.scheme == "https":
+            if self.scheme == "https" or self.scheme == "view-source:https":
                 ctx = ssl.create_default_context()
                 s = ctx.wrap_socket(s, server_hostname=self.host)
 
@@ -94,27 +94,24 @@ class URL:
         if "transfer-encoding" in response_headers:
             if response_headers.get("transfer-encoding") == "chunked":
 
-                content = ""
+                raw_body = b""
 
                 while True:
-                    response_length = response.readline().decode("utf-8")
-                    response_length = response_length.split("b'", 0)[0].strip()
+
+                    response_length = response.readline().decode("utf-8").strip()
                     response_length = int(response_length, 16)
 
                     if response_length == 0:
                         break
 
-                    raw_content = response.read(response_length)
-
-                    if "content-encoding" in response_headers:
-                        if response_headers.get("content-encoding") == "gzip":
-                            content += gzip.decompress(raw_content).decode("utf-8")
-                        else:
-                            content += raw_content.decode("utf-8")
-
+                    raw_body += response.read(response_length)
                     response.read(2)
 
-                return content
+                if "content-encoding" in response_headers:
+                    if response_headers.get("content-encoding") == "gzip":
+                        return gzip.decompress(raw_body).decode("utf-8")
+
+                return raw_body.decode("utf-8")
 
             else:
                 return "Unsupported transfer encoding method!"
@@ -153,6 +150,6 @@ class URL:
 
 if __name__ == "__main__":
     b = Browser()
-    b.load(URL("https://browser.engineering/http.html"))
+    b.load(URL("view-source:https://theyogainstitute.org"))
     tkinter.mainloop()
 
