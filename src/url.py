@@ -102,13 +102,11 @@ class URL:
 
             return URL(redirect_location).request(True, s)
 
-
-        content = ""
+        raw_body = b""
 
         if "transfer-encoding" in response_headers:
             if response_headers.get("transfer-encoding") == "chunked":
 
-                raw_body = b""
                 while True:
 
                     response_length = response.readline().decode("utf-8").strip()
@@ -120,16 +118,13 @@ class URL:
                     raw_body += response.read(response_length)
                     response.read(2)
 
-
-                content = self.decompress_body(response_headers, raw_body)
-
             else:
                 return "Unsupported transfer encoding method!"
         else:
             response_length = int(response_headers.get("content-length"))
-            raw_content = response.read(response_length)
+            raw_body = response.read(response_length)
 
-            content = self.decompress_body(response_headers, raw_content)
+        content = self.decompress_body(response_headers, raw_body)
 
         return content
 

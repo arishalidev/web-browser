@@ -69,6 +69,9 @@ class Browser:
     def draw(self):
         self.canvas.delete("all")
         for x, y, c in self.display_list:
+            if y > self.scroll + HEIGHT: continue
+            if y + V_STEP < self.scroll: continue
+
             self.canvas.create_text(x, y - self.scroll, text=c)
 
     def scroll_down(self, e):
@@ -79,9 +82,16 @@ def layout(text):
     display_list = []
     cursor_x, cursor_y = H_STEP, V_STEP
     for c in text:
+
         display_list.append((cursor_x, cursor_y, c))
         cursor_x += H_STEP
 
+        if c == "\n":
+            cursor_y += V_STEP/2 + 6
+            cursor_x = H_STEP
+
+
+        # Check if cursor reaches end of window
         if cursor_x >= WIDTH - H_STEP:
             cursor_y += V_STEP
             cursor_x = H_STEP
