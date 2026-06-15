@@ -28,7 +28,7 @@ def replace_entity(text, entity, entity_replacement):
 
 
 class Browser:
-    def __init__(self):
+    def __init__(self, test_mode = False):
         self.display_list = None
         self.scroll = 0
         self.window = tkinter.Tk()
@@ -42,7 +42,7 @@ class Browser:
         self.window.bind("<Down>", self.scroll_down)
 
         self.current_host = ("", None)
-
+        self.test_mode = test_mode
 
     def load(self, url):
         body = ""
@@ -61,8 +61,6 @@ class Browser:
 
         text = replace_entity(text, "&lt;", "<")
         text = replace_entity(text, "&gt;", ">")
-
-        print(text)
 
         self.display_list = layout(text)
         self.draw()
