@@ -79,9 +79,13 @@ class Browser:
 
             self.canvas.create_text(x, y - self.scroll, text=c)
 
+        self.draw_scroll_bar()
+
     def scroll_down(self, e):
-        self.scroll += SCROLL_STEP
-        self.draw()
+        page_height = self.display_list[-1][1]
+        if self.scroll + HEIGHT < page_height:
+            self.scroll += SCROLL_STEP
+            self.draw()
 
     def scroll_up(self, e):
         if not self.scroll <= 0:
@@ -90,7 +94,11 @@ class Browser:
 
     # only works on mac
     def mouse_scroll(self, e):
-        if not self.scroll <= 0 or e.delta < 0:
+
+        page_height = self.display_list[-1][1]
+
+        # only allow scrolling down when at top of page, and only allow scrolling up when at bottom of page
+        if (not self.scroll <= 0 or e.delta < 0) and (self.scroll + HEIGHT - V_STEP < page_height or e.delta > 0):
             self.scroll += e.delta * - 3
             self.draw()
 
@@ -103,6 +111,22 @@ class Browser:
 
         self.draw()
         self.display_list = layout(self.text)
+
+    def draw_scroll_bar(self):
+        page_height = self.display_list[-1][1]
+
+        if page_height <= HEIGHT:
+            return
+
+        scroll_bar_height = (HEIGHT / page_height) * HEIGHT
+        scroll_bar_width = 12
+
+        x_margin = 4
+
+        y_start = ((self.scroll / page_height) * HEIGHT)
+        y_end = y_start +  scroll_bar_height
+
+        self.canvas.create_rectangle(WIDTH - scroll_bar_width - x_margin, y_start, WIDTH - x_margin, y_end, fill="blue")
 
 def layout(text):
     display_list = []
