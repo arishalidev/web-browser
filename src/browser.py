@@ -40,6 +40,8 @@ class Browser:
         self.canvas.pack()
 
         self.window.bind("<Down>", self.scroll_down)
+        self.window.bind("<Up>", self.scroll_up)
+        self.window.bind("<MouseWheel>", self.mouse_scroll)
 
         self.current_host = ("", None)
         self.test_mode = test_mode
@@ -78,17 +80,28 @@ class Browser:
         self.scroll += SCROLL_STEP
         self.draw()
 
+    def scroll_up(self, e):
+        if not self.scroll <= 0:
+            self.scroll -= SCROLL_STEP
+            self.draw()
+
+    # only works on mac
+    def mouse_scroll(self, e):
+        self.scroll += e.delta * - 3
+        self.draw()
+
 def layout(text):
     display_list = []
     cursor_x, cursor_y = H_STEP, V_STEP
     for c in text:
 
+        if c == "\n":
+            cursor_y += V_STEP + 6
+            cursor_x = H_STEP
+            continue
+
         display_list.append((cursor_x, cursor_y, c))
         cursor_x += H_STEP
-
-        if c == "\n":
-            cursor_y += V_STEP/2 + 6
-            cursor_x = H_STEP
 
 
         # Check if cursor reaches end of window
