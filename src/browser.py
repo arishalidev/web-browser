@@ -15,6 +15,10 @@ def lex(body):
             in_tag = False
         elif not in_tag:
             text += c
+
+    text = replace_entity(text, "&lt;", "<")
+    text = replace_entity(text, "&gt;", ">")
+
     return text
 
 def replace_entity(text, entity, entity_replacement):
@@ -37,14 +41,16 @@ class Browser:
             width=WIDTH,
             height=HEIGHT
         )
-        self.canvas.pack()
+        self.canvas.pack(fill="both", expand=1)
 
         self.window.bind("<Down>", self.scroll_down)
         self.window.bind("<Up>", self.scroll_up)
         self.window.bind("<MouseWheel>", self.mouse_scroll)
+        self.window.bind("<Configure>", self.resize)
 
         self.current_host = ("", None)
         self.test_mode = test_mode
+        self.text = ""
 
     def load(self, url):
         body = ""
@@ -57,14 +63,11 @@ class Browser:
                 body = url.getfile()
 
         if not url.view_source:
-            text = lex(body)
+            self.text = lex(body)
         else:
-            text = body
+            self.text = body
 
-        text = replace_entity(text, "&lt;", "<")
-        text = replace_entity(text, "&gt;", ">")
-
-        self.display_list = layout(text)
+        self.display_list = layout(self.text)
         self.draw()
 
 
@@ -87,8 +90,19 @@ class Browser:
 
     # only works on mac
     def mouse_scroll(self, e):
-        self.scroll += e.delta * - 3
+        if not self.scroll <= 0 or e.delta < 0:
+            self.scroll += e.delta * - 3
+            self.draw()
+
+    def resize(self, e):
+        if e.widget != self.window:
+            return
+
+        global WIDTH, HEIGHT
+        WIDTH, HEIGHT = e.width, e.height
+
         self.draw()
+        self.display_list = layout(self.text)
 
 def layout(text):
     display_list = []
