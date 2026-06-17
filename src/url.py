@@ -6,46 +6,50 @@ class URL:
     def __init__(self, url):
 
         self.socket = None
+        self.blank = False
 
         if not url:
             url = "file:///Users/arisha/Documents/browserTest.txt"
 
-        self.scheme, url = url.split("://", 1)
-        assert self.scheme in ["http", "https", "file", "view-source:http", "view-source:https"]
+        try:
+            self.scheme, url = url.split("://", 1)
+            assert self.scheme in ["http", "https", "file", "view-source:http", "view-source:https"]
 
-        match self.scheme:
-            case "http" | "https" | "view-source:http" | "view-source:https":
+            match self.scheme:
+                case "http" | "https" | "view-source:http" | "view-source:https":
 
-                if self.scheme.split(":", 1)[0] == "view-source":
+                    if self.scheme.split(":", 1)[0] == "view-source":
+                        self.view_source = True
+                    else:
+                        self.view_source = False
+
+                    if self.scheme == "http" or self.scheme == "view-source:http":
+                        self.port = 80
+                        self.scheme = "http"
+                    elif self.scheme == "https" or self.scheme == "view-source:https":
+                        self.port = 443
+                        self.scheme = "https"
+
+
+                    if "/" not in url:
+                        url = url + "/"
+
+                    self.host, url = url.split("/", 1)
+
+                    if ":" in self.host:
+                        self.host, port = self.host.split(":", 1)
+                        self.port = int(port)
+
+                    self.path = "/" + url
+
+                case "file":
+                    if "/" not in url:
+                        url = "/" + url
+
+                    self.file_path = url
                     self.view_source = True
-                else:
-                    self.view_source = False
-
-                if self.scheme == "http" or self.scheme == "view-source:http":
-                    self.port = 80
-                    self.scheme = "http"
-                elif self.scheme == "https" or self.scheme == "view-source:https":
-                    self.port = 443
-                    self.scheme = "https"
-
-
-                if "/" not in url:
-                    url = url + "/"
-
-                self.host, url = url.split("/", 1)
-
-                if ":" in self.host:
-                    self.host, port = self.host.split(":", 1)
-                    self.port = int(port)
-
-                self.path = "/" + url
-
-            case "file":
-                if "/" not in url:
-                    url = "/" + url
-
-                self.file_path = url
-                self.view_source = True
+        except ValueError:
+            self.blank = True
 
 
     def request(self, established = False, established_socket = None):

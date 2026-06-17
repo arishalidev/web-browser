@@ -1,3 +1,4 @@
+import socket
 import tkinter
 
 WIDTH, HEIGHT = 800, 600
@@ -15,9 +16,6 @@ def lex(body):
             in_tag = False
         elif not in_tag:
             text += c
-
-    text = replace_entity(text, "&lt;", "<")
-    text = replace_entity(text, "&gt;", ">")
 
     return text
 
@@ -53,21 +51,37 @@ class Browser:
         self.text = ""
 
     def load(self, url):
+
+        if url.blank:
+            self.load_blank()
+
         body = ""
 
-        match url.scheme:
-            case "http" | "https":
-                body = url.request(url.host == self.current_host[0], self.current_host[1])
-                self.current_host = (url.host, url.socket)
-            case "file":
-                body = url.getfile()
+        try:
+            match url.scheme:
+                case "http" | "https":
+                    body = url.request(url.host == self.current_host[0], self.current_host[1])
+                    self.current_host = (url.host, url.socket)
+                case "file":
+                    body = url.getfile()
 
-        if not url.view_source:
-            self.text = lex(body)
-        else:
-            self.text = body
+            body = replace_entity(body, "&lt;", "<")
+            body = replace_entity(body, "&gt;", ">")
+
+            if not url.view_source:
+                self.text = lex(body)
+            else:
+                self.text = body
+
+        except (socket.gaierror, AttributeError):
+            self.load_blank()
+            return
 
         self.display_list = layout(self.text)
+        self.draw()
+
+    def load_blank(self):
+        self.display_list = []
         self.draw()
 
 
@@ -113,7 +127,7 @@ class Browser:
         self.display_list = layout(self.text)
 
     def draw_scroll_bar(self):
-        page_height = self.display_list[-1][1]
+        page_height = self.display_list[-1][1] if self.display_list else 0
 
         if page_height <= HEIGHT:
             return
