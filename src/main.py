@@ -5,7 +5,7 @@ from url import URL
 
 if __name__ == "__main__":
     b = Browser()
-    b.load(URL(""))
+    b.load(URL("https://browser.engineering/graphics.html"))
     tkinter.mainloop()
 
 

@@ -1,5 +1,6 @@
 import socket
 import tkinter
+import tkinter.font
 
 WIDTH, HEIGHT = 800, 600
 H_STEP, V_STEP = 13, 18
@@ -145,20 +146,23 @@ class Browser:
 def layout(text):
     display_list = []
     cursor_x, cursor_y = H_STEP, V_STEP
-    for c in text:
+    font = tkinter.font.Font()
 
-        if c == "\n":
-            cursor_y += V_STEP + 6
-            cursor_x = H_STEP
-            continue
+    for word in text.split():
+        w = font.measure(word)
 
-        display_list.append((cursor_x, cursor_y, c))
-        cursor_x += H_STEP
+        #if c == "\n":
+        #    cursor_y += V_STEP + 6
+        #    cursor_x = H_STEP
+        #    continue
+
+        display_list.append((cursor_x, cursor_y, word))
+        cursor_x += w + font.measure(" ")
 
 
         # Check if cursor reaches end of window
-        if cursor_x >= WIDTH - H_STEP:
-            cursor_y += V_STEP
+        if cursor_x + w > WIDTH - H_STEP:
+            cursor_y += font.metrics("linespace") * 1.25
             cursor_x = H_STEP
 
     return display_list
