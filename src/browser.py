@@ -1,24 +1,38 @@
 import socket
 import tkinter
 import tkinter.font
+from typing import Literal
 
 WIDTH, HEIGHT = 800, 600
 H_STEP, V_STEP = 13, 18
 SCROLL_STEP = 100
 
+class Text:
+    def __init__(self, text):
+        self.text = text
+
+class Tag:
+    def __init__(self, tag):
+        self.tag = tag
 
 def lex(body):
+    out = []
+    buffer = ""
     in_tag = False
-    text = ""
     for c in body:
         if c == "<":
             in_tag = True
+            if buffer: out.append(Text(buffer))
+            buffer = ""
         elif c == ">":
             in_tag = False
+            out.append(Tag(buffer))
+            buffer = ""
         elif not in_tag:
-            text += c
-
-    return text
+            buffer += c
+    if not in_tag and buffer:
+        out.append(Text(buffer))
+    return out
 
 def replace_entity(text, entity, entity_replacement):
     index = text.find(entity)
@@ -88,11 +102,11 @@ class Browser:
 
     def draw(self):
         self.canvas.delete("all")
-        for x, y, c in self.display_list:
+        for x, y, c, z in self.display_list:
             if y > self.scroll + HEIGHT: continue
             if y + V_STEP < self.scroll: continue
 
-            self.canvas.create_text(x, y - self.scroll, text=c)
+            self.canvas.create_text(x, y - self.scroll, font=z, text=c, anchor="nw")
 
         self.draw_scroll_bar()
 
@@ -143,26 +157,38 @@ class Browser:
 
         self.canvas.create_rectangle(WIDTH - scroll_bar_width - x_margin, y_start, WIDTH - x_margin, y_end, fill="blue")
 
-def layout(text):
+def layout(tokens):
     display_list = []
     cursor_x, cursor_y = H_STEP, V_STEP
-    font = tkinter.font.Font()
 
-    for word in text.split():
-        w = font.measure(word)
+    weight: Literal["normal", "bold"] = "normal"
+    style: Literal["roman", "italic"] = "roman"
 
-        #if c == "\n":
-        #    cursor_y += V_STEP + 6
-        #    cursor_x = H_STEP
-        #    continue
+    font = tkinter.font.Font(
+        size=16,
+        weight=weight,
+        slant=style
+    )
 
-        display_list.append((cursor_x, cursor_y, word))
-        cursor_x += w + font.measure(" ")
+    for tok in tokens:
+        if isinstance(tok, Text):
+            for word in tok.text.split():
+                w = font.measure(word)
 
+                display_list.append((cursor_x, cursor_y, word, font))
+                cursor_x += w + font.measure(" ")
 
-        # Check if cursor reaches end of window
-        if cursor_x + w > WIDTH - H_STEP:
-            cursor_y += font.metrics("linespace") * 1.25
-            cursor_x = H_STEP
+                # Check if cursor reaches end of window
+                if cursor_x + w > WIDTH - H_STEP:
+                    cursor_y += font.metrics("linespace") * 1.25
+                    cursor_x = H_STEP
+        elif tok.tag == "i":
+            style = "italic"
+        elif tok.tag == "/i":
+            style = "roman"
+        elif tok.tag == "b":
+            weight = "bold"
+        elif tok.tag == "/b":
+            weight = "normal"
 
     return display_list
