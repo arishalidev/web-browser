@@ -28,7 +28,7 @@ def lex(body):
             in_tag = False
             out.append(Tag(buffer))
             buffer = ""
-        elif not in_tag:
+        else:
             buffer += c
     if not in_tag and buffer:
         out.append(Text(buffer))
@@ -92,7 +92,7 @@ class Browser:
             self.load_blank()
             return
 
-        self.display_list = layout(self.text)
+        self.display_list = Layout(self.text).display_list
         self.draw()
 
     def load_blank(self):
@@ -139,7 +139,7 @@ class Browser:
         WIDTH, HEIGHT = e.width, e.height
 
         self.draw()
-        self.display_list = layout(self.text)
+        self.display_list = Layout(self.text).display_list
 
     def draw_scroll_bar(self):
         page_height = self.display_list[-1][1] if self.display_list else 0
@@ -157,38 +157,48 @@ class Browser:
 
         self.canvas.create_rectangle(WIDTH - scroll_bar_width - x_margin, y_start, WIDTH - x_margin, y_end, fill="blue")
 
-def layout(tokens):
-    display_list = []
-    cursor_x, cursor_y = H_STEP, V_STEP
+class Layout():
 
-    weight: Literal["normal", "bold"] = "normal"
-    style: Literal["roman", "italic"] = "roman"
+    def __init__(self, tokens):
+        self.display_list = []
+        self.cursor_x = H_STEP
+        self.cursor_y = V_STEP
 
-    font = tkinter.font.Font(
-        size=16,
-        weight=weight,
-        slant=style
-    )
+        self.weight: Literal["normal", "bold"] = "normal"
+        self.style: Literal["roman", "italic"] = "roman"
 
-    for tok in tokens:
+        for tok in tokens:
+            self.token(tok)
+
+
+    def token(self, tok):
         if isinstance(tok, Text):
             for word in tok.text.split():
-                w = font.measure(word)
+                self.word(word)
 
-                display_list.append((cursor_x, cursor_y, word, font))
-                cursor_x += w + font.measure(" ")
-
-                # Check if cursor reaches end of window
-                if cursor_x + w > WIDTH - H_STEP:
-                    cursor_y += font.metrics("linespace") * 1.25
-                    cursor_x = H_STEP
         elif tok.tag == "i":
-            style = "italic"
+            self.style = "italic"
         elif tok.tag == "/i":
-            style = "roman"
+            self.style = "roman"
         elif tok.tag == "b":
-            weight = "bold"
+            self.weight = "bold"
         elif tok.tag == "/b":
-            weight = "normal"
+            self.weight = "normal"
 
-    return display_list
+    def word(self, word):
+        font = tkinter.font.Font(
+            size=16,
+            weight=self.weight,
+            slant=self.style
+        )
+
+        w = font.measure(word)
+
+        self.display_list.append((self.cursor_x, self.cursor_y, word, font))
+        self.cursor_x += w + font.measure(" ")
+
+        # Check if cursor reaches end of window
+        if self.cursor_x + w > WIDTH - H_STEP:
+            self.cursor_y += font.metrics("linespace") * 1.25
+            self.cursor_x = H_STEP
+
