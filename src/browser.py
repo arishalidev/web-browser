@@ -16,6 +16,11 @@ class Tag:
     def __init__(self, tag):
         self.tag = tag
 
+def decode_entities(text):
+    text = replace_entity(text, "&lt;", "<")
+    text = replace_entity(text, "&gt;", ">")
+    return text
+
 def lex(body):
     out = []
     buffer = ""
@@ -23,7 +28,10 @@ def lex(body):
     for c in body:
         if c == "<":
             in_tag = True
-            if buffer: out.append(Text(buffer))
+
+            if buffer:
+                out.append(Text(decode_entities(buffer)))
+
             buffer = ""
         elif c == ">":
             in_tag = False
@@ -32,7 +40,7 @@ def lex(body):
         else:
             buffer += c
     if not in_tag and buffer:
-        out.append(Text(buffer))
+        out.append(Text(decode_entities(buffer)))
     return out
 
 def replace_entity(text, entity, entity_replacement):
@@ -81,9 +89,6 @@ class Browser:
                 case "file":
                     body = url.getfile()
 
-            body = replace_entity(body, "&lt;", "<")
-            body = replace_entity(body, "&gt;", ">")
-
             if not url.view_source:
                 self.text = lex(body)
             else:
@@ -122,7 +127,7 @@ class Browser:
             self.scroll -= SCROLL_STEP
             self.draw()
 
-    # only works on mac
+    # only works on Mac
     def mouse_scroll(self, e):
 
         page_height = self.display_list[-1][1]
@@ -158,8 +163,7 @@ class Browser:
 
         self.canvas.create_rectangle(WIDTH - scroll_bar_width - x_margin, y_start, WIDTH - x_margin, y_end, fill="blue")
 
-class Layout():
-
+class Layout:
     def __init__(self, tokens):
         self.display_list = []
         self.line = []
