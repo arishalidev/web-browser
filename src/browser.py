@@ -171,6 +171,8 @@ class Layout():
         self.style: Literal["roman", "italic"] = "roman"
         self.size = 12
 
+        self.current_centered = False
+
         for tok in tokens:
             self.token(tok)
 
@@ -203,6 +205,12 @@ class Layout():
         elif tok.tag == "/p":
             self.flush()
             self.cursor_y += V_STEP
+        elif tok.tag == "h1 class=\"title\"":
+            self.current_centered = True
+        elif tok.tag == "/h1":
+            self.flush()
+            self.cursor_y += V_STEP
+            self.current_centered = False
 
     def word(self, word):
         font = get_font(
@@ -233,8 +241,13 @@ class Layout():
         max_ascent = max(max_ascents)
 
         baseline = self.cursor_y + 1.25 * max_ascent
+        starting_pos_centered = (WIDTH / 2) - (self.cursor_x // 2)
         for x, word, font in self.line:
             y = baseline - font.metrics("ascent")
+
+            if self.current_centered:
+                x = x + starting_pos_centered
+
             self.display_list.append((x, y, word, font))
 
         max_descents = []
