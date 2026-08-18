@@ -6,6 +6,7 @@ from typing import Literal
 WIDTH, HEIGHT = 800, 600
 H_STEP, V_STEP = 13, 18
 SCROLL_STEP = 100
+FONTS = {}
 
 class Text:
     def __init__(self, text):
@@ -204,9 +205,9 @@ class Layout():
             self.cursor_y += V_STEP
 
     def word(self, word):
-        font = tkinter.font.Font(
+        font = get_font(
             weight=self.weight,
-            slant=self.style,
+            style=self.style,
             size=self.size
         )
 
@@ -244,4 +245,17 @@ class Layout():
         self.cursor_y = baseline + 1.25 * max_descent
         self.cursor_x = H_STEP
         self.line = []
+
+def get_font(size, weight, style):
+    key = (size, weight, style)
+    if key not in FONTS:
+        font = tkinter.font.Font(
+            weight=weight,
+            slant=style,
+            size=size
+        )
+        label = tkinter.Label(font=font)
+        FONTS[key] = (font, label)
+    return FONTS[key][0]
+
 
