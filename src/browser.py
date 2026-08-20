@@ -173,7 +173,7 @@ class Layout:
         self.size = 12
 
         self.current_centered = False
-        self.subscript = False
+        self.superscript = False
 
         for tok in tokens:
             self.token(tok)
@@ -215,10 +215,10 @@ class Layout:
             self.current_centered = False
         elif tok.tag == "sup":
             self.size = 6
-            self.subscript = True
+            self.superscript = True
         elif tok.tag == "/sup":
             self.size = 12
-            self.subscript = False
+            self.superscript = False
 
 
     def word(self, word):
@@ -230,7 +230,7 @@ class Layout:
 
         w = font.measure(word)
 
-        self.line.append((self.cursor_x, word, font))
+        self.line.append((self.cursor_x, word, font, self.superscript))
         self.cursor_x += w + font.measure(" ")
 
         # Check if cursor reaches end of window
@@ -241,7 +241,7 @@ class Layout:
         if not self.line: return
 
         metrics = []
-        for x, word, font in self.line:
+        for x, word, font, superscript in self.line:
             metrics.append(font.metrics())
 
         max_ascents = []
@@ -251,13 +251,13 @@ class Layout:
 
         baseline = self.cursor_y + 1.25 * max_ascent
         starting_pos_centered = (WIDTH / 2) - (self.cursor_x // 2)
-        for x, word, font in self.line:
+        for x, word, font, superscript in self.line:
 
-            # only display non-subscript text on baseline
-            if self.subscript:
-                y = baseline - font.metrics("ascent")
+            # only display non-superscript text on baseline
+            if superscript:
+                y = baseline - max_ascent
             else:
-                y = baseline - 1.25 * max_ascent
+                y = baseline - font.metrics("ascent")
 
             if self.current_centered:
                 x = x + starting_pos_centered
