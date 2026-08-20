@@ -89,10 +89,7 @@ class Browser:
                 case "file":
                     body = url.getfile()
 
-            if not url.view_source:
-                self.text = lex(body)
-            else:
-                self.text = body
+            self.text = lex(body)
 
         except (socket.gaierror, AttributeError):
             self.load_blank()
@@ -176,6 +173,7 @@ class Layout:
         self.size = 12
 
         self.current_centered = False
+        self.subscript = False
 
         for tok in tokens:
             self.token(tok)
@@ -215,6 +213,13 @@ class Layout:
             self.flush()
             self.cursor_y += V_STEP
             self.current_centered = False
+        elif tok.tag == "sup":
+            self.size = 6
+            self.subscript = True
+        elif tok.tag == "/sup":
+            self.size = 12
+            self.subscript = False
+
 
     def word(self, word):
         font = get_font(
@@ -247,7 +252,12 @@ class Layout:
         baseline = self.cursor_y + 1.25 * max_ascent
         starting_pos_centered = (WIDTH / 2) - (self.cursor_x // 2)
         for x, word, font in self.line:
-            y = baseline - font.metrics("ascent")
+
+            # only display non-subscript text on baseline
+            if self.subscript:
+                y = baseline - font.metrics("ascent")
+            else:
+                y = baseline - 1.25 * max_ascent
 
             if self.current_centered:
                 x = x + starting_pos_centered
